@@ -38,35 +38,35 @@ function start() {
                 // Function to show table
                 viewEmployees();
             }
-            if (answer.mainMenu === "View All Employees by Department") {
+            else if (answer.mainMenu === "View All Employees by Department") {
                 // Call function to show by department
                 byDepartment();
             }
-            if (answer.mainMenu === "View All Employees by Manager") {
+            else if (answer.mainMenu === "View All Employees by Manager") {
                 // Call function to show by manager
                 byManager();
             }
-            if (answer.mainMenu === "Add Employee") {
+            else if (answer.mainMenu === "Add Employee") {
                 // Use Post Auction Functionality
                 addEmployee();
             } 
             // else if (answer.mainMenu === "Remove Employee") {
             //     fireEmployee();
             // } 
-            if (answer.mainMenu === "Update Employee Role") {
+            else if (answer.mainMenu === "Update Employee Role") {
                 // List functionality from roles
                 updateRole();
             }
             //  else if (answer.mainMenu === "Update Employee Manager") {
                 // updateManager();
             // } 
-            if (answer.mainMenu === "View Roles") {
+            else if (answer.mainMenu === "View Roles") {
                 viewRoles();
             }
-            if (answer.mainMenu === "View Departments") {
+            else if (answer.mainMenu === "View Departments") {
                 viewDepartments();
             }
-            if (answer.mainMenu === "Add Role") {
+            else if (answer.mainMenu === "Add Role") {
                 // Use Post Auction Functionality
                 addRole();
             }
