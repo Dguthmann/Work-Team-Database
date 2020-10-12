@@ -1,5 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+// require("console.table");
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -13,7 +14,7 @@ var connection = mysql.createConnection({
 
     // Your password
     password: "password",
-    database: "workTeam_DB"
+    database: "workteam_DB"
 });
 
 // connect to the mysql server and sql database
@@ -49,7 +50,7 @@ function start() {
             else if (answer.mainMenu === "Add Employee") {
                 // Use Post Auction Functionality
                 addEmployee();
-            } 
+            }
             // else if (answer.mainMenu === "Remove Employee") {
             //     fireEmployee();
             // } 
@@ -58,7 +59,7 @@ function start() {
                 updateRole();
             }
             //  else if (answer.mainMenu === "Update Employee Manager") {
-                // updateManager();
+            // updateManager();
             // } 
             else if (answer.mainMenu === "View Roles") {
                 viewRoles();
@@ -83,7 +84,7 @@ function start() {
 }
 
 // function shows the employee table and returns to prompt menu
-function viewEmployees(){
+function viewEmployees() {
     connection.query("SELECT * FROM employee", function (err, stuff) {
         if (err) {
             throw err;
@@ -95,8 +96,9 @@ function viewEmployees(){
 }
 
 // function shows the employee table by dept and returns to prompt menu
-function byDepartment(){
+function byDepartment() {
     console.log("I'm viewing by dept");
+
     start()
 }
 
@@ -107,19 +109,81 @@ function byManager() {
 }
 
 // Use post function for framework
-function addEmployee(){
-    console.log("I'm adding an employee");
-    start()
+function addEmployee() {
+    // console.log("I'm adding an employee");
+    connection.query("SELECT * FROM my_role", (err, results) => {
+        if (err) throw err;
+        console.table(results);
+        inquirer.prompt([
+            {
+                name: "first_name",
+                type: "input",
+                message: "What is the first name of the new employee?"
+            },
+            {
+                name: "last_name",
+                type: "input",
+                message: "What is the last name of the new employee?"
+            }, {
+                name: "role",
+                type: "list",
+                message: "Which role is the employee?",
+                choices: function () {
+                    const roleArray = [];
+                    for (let j = 0; j < results.length; j++) {
+                        roleArray.push(results[j].title);
+                    }
+                    return roleArray;
+                }
+            }
+        ])
+            .then(function (answer) {
+                // when finished prompting, insert a new item into the db with that info
+                const roleName = answer.role;
+                const roleID = results.filter(rolo =>
+                    rolo.title === roleName
+                )
+                console.table(roleID);
+                connection.query(
+                    "INSERT INTO employee SET ?",
+                    {
+                        first_name: answer.first_name,
+                        last_name: answer.last_name,
+                        role_id: roleID[0].role_id,
+                    },
+                    function (err) {
+                        if (err) throw err;
+                        // console.table(managerial)
+                        // handleManager(answer.first_name, answer.last_name);
+                        //console.log("Your role was created successfully!");
+                        // re-prompt the user for if they want to bid or post
+
+                        // start();
+                    }
+                );
+            });
+    });
 }
 
+// function handleManager(first, last) {
+//     connection.query("SELECT * FROM employees", (err, results) => {
+//         if (err) throw err;
+//         const personArray = [];
+//         for (let j = 0; j < results.length; j++) {
+//             personArray.push(results[j].title)
+//         }
+//         return roleArray;
+//     });
+// }
+
 // Update FK role_id for employee
-function updateRole(){
+function updateRole() {
     console.log("I'm updating role");
     start()
 }
 
 // function shows the role table and returns to prompt menu
-function viewRoles(){
+function viewRoles() {
     connection.query("SELECT * FROM my_role", function (err, stuff) {
         if (err) {
             throw err;
@@ -144,13 +208,81 @@ function viewDepartments() {
 }
 
 // Use post function for framework, create the employee one first then recycle ideas will be simplier for both role and dept
-function addRole(){
-    console.log("I'm adding a roll");
-    start()
+function addRole() {
+    // console.log("I'm adding a roll");
+    connection.query("SELECT * FROM department", (err, results) => {
+        if (err) throw err;
+        inquirer.prompt([
+            {
+                name: "role_name",
+                type: "input",
+                message: "What is the new role called?"
+            }, {
+                name: "salary",
+                type: "number",
+                message: "What is the new role salary?"
+            }, {
+                name: "depart",
+                type: "list",
+                message: "Which department is this part of?",
+                choices: function () {
+                    const choicesArray = [];
+                    for (let i = 0; i < results.length; i++) {
+                        choicesArray.push(results[i].dep_name);
+                    }
+                    return choicesArray;
+                }
+            }
+        ])
+            .then(function (answer) {
+                // when finished prompting, insert a new item into the db with that info
+                const depName = answer.depart;
+                const depID = results.filter(depa =>
+                    depa.dep_name === depName
+                )
+                console.table(depID);
+                connection.query(
+                    "INSERT INTO my_role SET ?",
+                    {
+                        title: answer.role_name,
+                        salary: answer.salary,
+                        department_id: depID[0].department_id
+                    },
+                    function (err) {
+                        if (err) throw err;
+                        console.log("Your role was created successfully!");
+                        // re-prompt the user for if they want to bid or post
+                        start();
+                    }
+                );
+            });
+    });
 }
 
 // Use post function for framework, create the employee one first then recycle ideas will be simplier for both role and dept
-function addDepartment(){
+function addDepartment() {
     console.log("I'm adding a dept");
-    start()
+    inquirer
+        .prompt([
+            {
+                name: "dep_name",
+                type: "text",
+                message: "What is the new department called?"
+            }
+        ])
+        .then(function (answer) {
+            // when finished prompting, insert a new item into the db with that info
+            connection.query(
+                "INSERT INTO department SET ?",
+                {
+                    dep_name: answer.dep_name
+                },
+                function (err) {
+                    if (err) throw err;
+                    console.log("Your department was created successfully!");
+                    // re-prompt the user for if they want to bid or post
+                    start();
+                }
+            );
+        });
 }
