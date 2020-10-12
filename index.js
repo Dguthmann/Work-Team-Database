@@ -75,6 +75,8 @@ function start() {
                 addDepartment();
             }
             else {
+                console.log("Thank you for using the database");
+                console.log("Good Bye!");
                 connection.end();
             }
         });
@@ -94,22 +96,26 @@ function viewEmployees(){
 
 // function shows the employee table by dept and returns to prompt menu
 function byDepartment(){
-
+    console.log("I'm viewing by dept");
+    start()
 }
 
 // function shows the employee table by manager and returns to prompt menu
 function byManager() {
-
+    console.log("I'm viewing by manager");
+    start()
 }
 
 // Use post function for framework
 function addEmployee(){
-
+    console.log("I'm adding an employee");
+    start()
 }
 
 // Update FK role_id for employee
 function updateRole(){
-
+    console.log("I'm updating role");
+    start()
 }
 
 // function shows the role table and returns to prompt menu
@@ -139,10 +145,12 @@ function viewDepartments() {
 
 // Use post function for framework, create the employee one first then recycle ideas will be simplier for both role and dept
 function addRole(){
-
+    console.log("I'm adding a roll");
+    start()
 }
 
 // Use post function for framework, create the employee one first then recycle ideas will be simplier for both role and dept
 function addDepartment(){
-
+    console.log("I'm adding a dept");
+    start()
 }
