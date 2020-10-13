@@ -28,7 +28,7 @@ function start() {
     inquirer
         .prompt({
             name: "mainMenu",
-            type: "list",
+            type: "rawlist",
             message: "What would you like to do?",
             choices: ["View All Employees", "View All Employees by Department", "View All Employees by Manager", "Add Employee", "Update Employee Role", "View Roles", "View Departments", "Add Role", "Add Department", "QUIT"]
         })
@@ -126,7 +126,7 @@ function addEmployee() {
                 message: "What is the last name of the new employee?"
             }, {
                 name: "role",
-                type: "list",
+                type: "rawlist",
                 message: "Which role is the employee?",
                 choices: function () {
                     const roleArray = [];
@@ -154,27 +154,41 @@ function addEmployee() {
                     function (err) {
                         if (err) throw err;
                         // console.table(managerial)
-                        // handleManager(answer.first_name, answer.last_name);
-                        //console.log("Your role was created successfully!");
-                        // re-prompt the user for if they want to bid or post
+                        const managerID = handleManager(answer.first_name, answer.last_name);
 
-                        // start();
-                    }
-                );
+                        connection.query(
+                            "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [managerID, answer.first_name, answer.last_name], function (err) {
+                                if (err) throw err;
+                                console.log("Your employee was created successfully!");
+                                start();
+                            })
+                    })
             });
     });
-}
+};
 
-// function handleManager(first, last) {
-//     connection.query("SELECT * FROM employees", (err, results) => {
-//         if (err) throw err;
-//         const personArray = [];
-//         for (let j = 0; j < results.length; j++) {
-//             personArray.push(results[j].title)
-//         }
-//         return roleArray;
-//     });
-// }
+function handleManager(first, last) {
+    connection.query("SELECT * FROM employees", (err, results) => {
+        if (err) throw err;
+        const personArray = [];
+        for (let j = 0; j < results.length; j++) {
+            personArray.push(results[j].first_name + " " + results[j].last_name)
+        }
+        inquirer.prompt([
+            {
+                name: "manager",
+                type: "rawlist",
+                message: "What is the manager of the new employee (pick new employee's name if no manager or self managed)?",
+                choices: personArray
+            }]).then(function (man) {
+                const [firstName, lastName] = man.manager.split(" ");
+                const foundManager = results.filter(manager =>
+                    manager.first_name === firstName && manager.last_name === lastName
+                );
+                return foundManager[0].manager_id;
+            })
+    });
+}
 
 // Update FK role_id for employee
 function updateRole() {
