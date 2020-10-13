@@ -48,7 +48,7 @@ function start() {
                 byManager();
             }
             else if (answer.mainMenu === "Add Employee") {
-                // Use Post Auction Functionality
+                // The most complicated add due to multiple foreign keys
                 addEmployee();
             }
             // else if (answer.mainMenu === "Remove Employee") {
@@ -83,9 +83,9 @@ function start() {
         });
 }
 
-// function shows the employee table and returns to prompt menu
+// Function shows the employee table and returns to prompt menu
 function viewEmployees() {
-    connection.query("SELECT * FROM employee", function (err, stuff) {
+    connection.query("SELECT employee.*, title, salary FROM employee, my_role", function (err, stuff) {
         if (err) {
             throw err;
         } else {
@@ -95,11 +95,17 @@ function viewEmployees() {
     })
 }
 
-// function shows the employee table by dept and returns to prompt menu
+// Function shows the employee table by dept and returns to prompt menu
 function byDepartment() {
     console.log("I'm viewing by dept");
-
-    start()
+    connection.query("SELECT employee_id, first_name, last_name, dep_name, title FROM employee, my_role, department WHERE employee.role_id = my_role.role_id AND my_role.department_id = department.department_id ORDER BY department.department_id", function (err, stuff) {
+        if (err) {
+            throw err;
+        } else {
+            console.table(stuff);
+            start();
+        }
+    })
 }
 
 // function shows the employee table by manager and returns to prompt menu
@@ -115,7 +121,7 @@ function byManager() {
     })
 }
 
-// Use post function for framework
+// Adding Employee function call
 function addEmployee() {
     // console.log("I'm adding an employee");
     connection.query("SELECT * FROM my_role", (err, results) => {
@@ -169,6 +175,34 @@ function addEmployee() {
     });
 };
 
+// Called by the add employee to allow for creation of employee then adding manager_id as itself once created
+function handleManager(first, last) {
+    connection.query("SELECT * FROM employee", (err, results) => {
+        if (err) throw err;
+        const personArray = [];
+        for (let j = 0; j < results.length; j++) {
+            personArray.push(results[j].first_name + " " + results[j].last_name)
+        }
+        inquirer.prompt([
+            {
+                name: "manager",
+                type: "rawlist",
+                message: "What is the manager of the new employee (pick new employee's name if no manager or self managed)?",
+                choices: personArray
+            }]).then(function (man) {
+                const [firstName, lastName] = man.manager.split(" ");
+                const foundManager = results.filter(manager =>
+                    manager.first_name === firstName && manager.last_name === lastName
+                );
+                connection.query(
+                    "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [foundManager[0].employee_id, first, last], function (err) {
+                        if (err) throw err;
+                        console.log("Your employee was created successfully!");
+                        start();
+                    })
+            })
+    });
+}
 
 function updateManager() {
     // console.log("I'm adding an employee");
@@ -202,7 +236,7 @@ function updateManager() {
             }
         ])
             .then(function (answer) {
-                // when finished prompting, insert a new item into the db with that info
+                // search for employee and manager for information for updating
                 const [firstN, lastN] = answer.emp.split(" ");
                 const foundEmployee = results.filter(employee =>
                     employee.first_name === firstN && employee.last_name === lastN
@@ -211,6 +245,7 @@ function updateManager() {
                 const foundManager = results.filter(manager =>
                     manager.first_name === firstName && manager.last_name === lastName
                 );
+                // when finished prompting, insert a new item into the db with that info
                 connection.query(
                     "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [foundManager[0].employee_id, foundEmployee[0].first_name, foundEmployee[0].last_name], function (err) {
                         if (err) throw err;
@@ -221,33 +256,6 @@ function updateManager() {
     });
 };
 
-function handleManager(first, last) {
-    connection.query("SELECT * FROM employee", (err, results) => {
-        if (err) throw err;
-        const personArray = [];
-        for (let j = 0; j < results.length; j++) {
-            personArray.push(results[j].first_name + " " + results[j].last_name)
-        }
-        inquirer.prompt([
-            {
-                name: "manager",
-                type: "rawlist",
-                message: "What is the manager of the new employee (pick new employee's name if no manager or self managed)?",
-                choices: personArray
-            }]).then(function (man) {
-                const [firstName, lastName] = man.manager.split(" ");
-                const foundManager = results.filter(manager =>
-                    manager.first_name === firstName && manager.last_name === lastName
-                );
-                connection.query(
-                    "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [foundManager[0].employee_id, first, last], function (err) {
-                        if (err) throw err;
-                        console.log("Your employee was created successfully!");
-                        start();
-                    })
-            })
-    });
-}
 
 // Update FK role_id for employee
 function updateRole() {
@@ -267,7 +275,7 @@ function viewRoles() {
     })
 }
 
-// function shows the role table and returns to prompt menu
+// function shows the department table and returns to prompt menu
 function viewDepartments() {
     connection.query("SELECT * FROM department", function (err, stuff) {
         if (err) {
@@ -280,11 +288,12 @@ function viewDepartments() {
 
 }
 
-// Use post function for framework, create the employee one first then recycle ideas will be simplier for both role and dept
+// Function for creating a new roll
 function addRole() {
-    // console.log("I'm adding a roll");
+    // Pulling data from department for use in inquirer
     connection.query("SELECT * FROM department", (err, results) => {
         if (err) throw err;
+        // inquirer prompt for generating the values needed for the role
         inquirer.prompt([
             {
                 name: "role_name",
@@ -313,7 +322,8 @@ function addRole() {
                 const depID = results.filter(depa =>
                     depa.dep_name === depName
                 )
-                console.table(depID);
+                // Above was needed to pull the exact department id for setting in the my_role table
+                // console.table(depID);
                 connection.query(
                     "INSERT INTO my_role SET ?",
                     {
