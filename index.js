@@ -30,9 +30,9 @@ function start() {
             name: "mainMenu",
             type: "rawlist",
             message: "What would you like to do?",
-            choices: ["View All Employees", "View All Employees by Department", "View All Employees by Manager", "Add Employee", "Update Employee Role", "View Roles", "View Departments", "Add Role", "Add Department", "QUIT"]
+            choices: ["View All Employees", "View All Employees by Department", "View All Employees by Manager", "Add Employee", "Update Employee Role", "Update Employee Manager", "View Roles", "View Departments", "Add Role", "Add Department", "QUIT"]
         })
-        // To Add Later "Remove Employee", "Update Employee Manager",
+        // To Add Later "Remove Employee", 
         .then(function (answer) {
             // based on their answer, either call the bid or the post functions
             if (answer.mainMenu === "View All Employees") {
@@ -58,9 +58,9 @@ function start() {
                 // List functionality from roles
                 updateRole();
             }
-            //  else if (answer.mainMenu === "Update Employee Manager") {
-            // updateManager();
-            // } 
+            else if (answer.mainMenu === "Update Employee Manager") {
+                updateManager();
+            }
             else if (answer.mainMenu === "View Roles") {
                 viewRoles();
             }
@@ -104,8 +104,15 @@ function byDepartment() {
 
 // function shows the employee table by manager and returns to prompt menu
 function byManager() {
-    console.log("I'm viewing by manager");
-    start()
+    // console.log("I'm viewing by manager");
+    connection.query("SELECT * FROM employee ORDER BY manager_id", function (err, stuff) {
+        if (err) {
+            throw err;
+        } else {
+            console.table(stuff);
+            start();
+        }
+    })
 }
 
 // Use post function for framework
@@ -113,7 +120,7 @@ function addEmployee() {
     // console.log("I'm adding an employee");
     connection.query("SELECT * FROM my_role", (err, results) => {
         if (err) throw err;
-        console.table(results);
+        // console.table(results);
         inquirer.prompt([
             {
                 name: "first_name",
@@ -152,23 +159,70 @@ function addEmployee() {
                         role_id: roleID[0].role_id,
                     },
                     function (err) {
-                        if (err) throw err;
+                        if (err) {
+                            throw err;
+                        }
                         // console.table(managerial)
-                        const managerID = handleManager(answer.first_name, answer.last_name);
+                        const managerID = handleManager(answer.first_name, answer.last_name)
+                    })
+            });
+    });
+};
 
-                        connection.query(
-                            "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [managerID, answer.first_name, answer.last_name], function (err) {
-                                if (err) throw err;
-                                console.log("Your employee was created successfully!");
-                                start();
-                            })
+
+function updateManager() {
+    // console.log("I'm adding an employee");
+    connection.query("SELECT * FROM employee", (err, results) => {
+        if (err) throw err;
+        // console.table(results);
+        inquirer.prompt([
+            {
+                name: "emp",
+                type: "rawlist",
+                message: "Which employee?",
+                choices: function () {
+                    const employeeArray = [];
+                    for (let j = 0; j < results.length; j++) {
+                        employeeArray.push(results[j].first_name + " " + results[j].last_name)
+                    }
+                    return employeeArray;
+                }
+            },
+            {
+                name: "man",
+                type: "rawlist",
+                message: "What is this employee's manager?",
+                choices: function () {
+                    const personArray = [];
+                    for (let j = 0; j < results.length; j++) {
+                        personArray.push(results[j].first_name + " " + results[j].last_name)
+                    }
+                    return personArray;
+                }
+            }
+        ])
+            .then(function (answer) {
+                // when finished prompting, insert a new item into the db with that info
+                const [firstN, lastN] = answer.emp.split(" ");
+                const foundEmployee = results.filter(employee =>
+                    employee.first_name === firstN && employee.last_name === lastN
+                );
+                const [firstName, lastName] = answer.man.split(" ");
+                const foundManager = results.filter(manager =>
+                    manager.first_name === firstName && manager.last_name === lastName
+                );
+                connection.query(
+                    "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [foundManager[0].employee_id, foundEmployee[0].first_name, foundEmployee[0].last_name], function (err) {
+                        if (err) throw err;
+                        console.log("Your employee was created successfully!");
+                        start();
                     })
             });
     });
 };
 
 function handleManager(first, last) {
-    connection.query("SELECT * FROM employees", (err, results) => {
+    connection.query("SELECT * FROM employee", (err, results) => {
         if (err) throw err;
         const personArray = [];
         for (let j = 0; j < results.length; j++) {
@@ -185,7 +239,12 @@ function handleManager(first, last) {
                 const foundManager = results.filter(manager =>
                     manager.first_name === firstName && manager.last_name === lastName
                 );
-                return foundManager[0].manager_id;
+                connection.query(
+                    "UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?", [foundManager[0].employee_id, first, last], function (err) {
+                        if (err) throw err;
+                        console.log("Your employee was created successfully!");
+                        start();
+                    })
             })
     });
 }
