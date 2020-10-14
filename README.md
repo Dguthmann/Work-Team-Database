@@ -29,7 +29,7 @@ The goal of the project is to create a database that allows users to create the 
 
 ## Video of Project
 
-To Be Added Later
+https://drive.google.com/file/d/1sL0bhMXNMo0xDMvbcgZMKwncyK9RoL8m/view?usp=sharing  
 
 
 ## Resources Used
