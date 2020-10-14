@@ -1,6 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
-// require("console.table");
+require("console.table");
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -85,7 +85,7 @@ function start() {
 
 // Function shows the employee table and returns to prompt menu
 function viewEmployees() {
-    connection.query("SELECT employee.*, title, salary FROM employee, my_role", function (err, stuff) {
+    connection.query("SELECT employee.*, title, salary FROM employee, my_role WHERE employee.role_id = my_role.role_id", function (err, stuff) {
         if (err) {
             throw err;
         } else {
@@ -259,9 +259,71 @@ function updateManager() {
 
 // Update FK role_id for employee
 function updateRole() {
-    console.log("I'm updating role");
-    start()
+    // console.log("I'm updating role");
+    connection.query("SELECT * FROM employee", (err, results) => {
+        if (err) throw err;
+        // console.table(results);
+        inquirer.prompt([
+            {
+                name: "emp",
+                type: "rawlist",
+                message: "Which employee?",
+                choices: function () {
+                    const employeeArray = [];
+                    for (let j = 0; j < results.length; j++) {
+                        employeeArray.push(results[j].first_name + " " + results[j].last_name)
+                    }
+                    return employeeArray;
+                }
+            }
+        ])
+            .then(function (answer) {
+                // search for employee and manager for information for updating
+                console.log(answer.emp + " " + answer.newRole);
+                const [firstN, lastN] = answer.emp.split(" ");
+                const foundEmployee = results.filter(employee =>
+                    employee.first_name === firstN && employee.last_name === lastN
+                );
+                updateRollP2(firstN, lastN);
+                // when finished prompting, insert a new item into the db with that info
+                
+            });
+
+    });
 }
+
+// Called by update role
+function updateRollP2(first, last) {
+    connection.query("SELECT * FROM my_role", (err, roles) => {
+        if (err) throw err;
+        inquirer.prompt([
+            {
+                name: "newRole",
+                type: "rawlist",
+                message: "Which role should be selected?",
+                choices: function () {
+                    const roleArray = [];
+                    for (let j = 0; j < roles.length; j++) {
+                        roleArray.push(roles[j].title)
+                    }
+                    return roleArray;
+                }
+            }
+        ]).then(function (answer) {
+            const foundRole = roles.filter(role =>
+                role.title === answer.newRole
+            );
+            connection.query(
+                "UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?", [foundRole[0].role_id, first, last], function (err) {
+                    if (err) throw err;
+                    console.log("Your employee was created successfully!");
+                    start();
+                })
+        })
+    });
+}
+
+
 
 // function shows the role table and returns to prompt menu
 function viewRoles() {

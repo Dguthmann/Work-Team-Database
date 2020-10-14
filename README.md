@@ -19,6 +19,7 @@ workSchema.sql
 you will need the following additional npms to run this project:  
 inquirer  
 mysql
+console.table
 
 
 ## Basic Overview of Project
@@ -33,7 +34,7 @@ To Be Added Later
 
 ## Resources Used
 
-Zach Auerbach with some bug fixing.
+Zach Auerbach with some bug fixing and idea auditing on some functionality.
 
 
 ## Further Development Plans
