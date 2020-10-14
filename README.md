@@ -18,7 +18,7 @@ workSchema.sql
 ## Installation
 you will need the following additional npms to run this project:  
 inquirer  
-mysql
+mysql  
 console.table
 
 
